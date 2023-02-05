@@ -71,14 +71,18 @@ func main() {
     }
 
 	a := app.New()
-	w := a.NewWindow(AppName)
 	trayUpdater := Tray{}
 
 	runner := NewScheduleRunner(schedule)
 
-	mainWindow := MainWindow{w, runner}
+	
+	clockWindow := NewClockWindow(a)
+	mainWindow := NewMainWindow(a, runner, clockWindow)
 
-	runner.SetCallbackOnTick(trayUpdater.Update)
+	runner.SetCallbackOnTick(func (s *SubjectRunner) {
+		trayUpdater.Update(s)
+		clockWindow.Update(s)
+	})
 	runner.SetCallbackOnSubjectFinish(func (s *SubjectRunner) {mainWindow.UpdateAndShow()})
 
 	if desk, ok := a.(desktop.App); ok {
@@ -87,13 +91,9 @@ func main() {
 		desk.SetSystemTrayMenu(m)
 	}
 
-	w.SetCloseIntercept(func() {
-		w.Hide()
-	})
-
-
 	runner.Start()
 	defer runner.Stop()
+
 	a.Run()
 }
 

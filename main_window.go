@@ -13,6 +13,18 @@ import (
 type MainWindow struct {
 	window fyne.Window
 	runner *ScheduleRunner
+	clockWindow *ClockWindow
+}
+
+
+func NewMainWindow(app fyne.App, runner *ScheduleRunner,clockWindow *ClockWindow) *MainWindow {
+	m := &MainWindow{app.NewWindow("Schedule"), runner, clockWindow}
+
+	m.window.SetCloseIntercept(func() {
+		m.window.Hide()
+	})
+	m.UpdateAndShow()
+	return m
 }
 
 
@@ -58,6 +70,7 @@ func (m *MainWindow) BuildMainWindow() fyne.CanvasObject {
 			widget.NewButton(ButtonText[subj.Status], func() { 
 				m.runner.StartSubject(i) 
 				m.window.Hide()
+				m.clockWindow.Show()
 			}),
 			text,
 			widget.NewLabelWithStyle(subj.Subject.Author, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true}),
