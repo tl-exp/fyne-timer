@@ -16,10 +16,12 @@ type ClockWindow struct {
 	timerText *canvas.Text
 	subjectText *canvas.Text
 	manuallyClosed bool
+	mainWindow *MainWindow
+	stealFocus bool
 }
 
 func NewClockWindow(app fyne.App) *ClockWindow {
-	c := &ClockWindow{app.NewWindow("Clock"), nil, nil, false}
+	c := &ClockWindow{app.NewWindow("Clock"), nil, nil, false, nil, true}
 
 	c.Init()
 
@@ -32,12 +34,18 @@ func (c *ClockWindow) Show() {
 	c.window.Show()
 }
 
+
+func (c *ClockWindow) SetMainWindow(mainWindow *MainWindow) {
+	c.mainWindow = mainWindow
+}
+
+
 func (c *ClockWindow) Init() {
 	c.window.SetCloseIntercept(func() {
 		c.manuallyClosed = true 
 		c.window.Hide()
 	})
-	
+	c.window.Resize(fyne.NewSize(300, 100))
 	c.timerText = canvas.NewText(fmtDuration(0), color.Black)
 	c.timerText.Alignment = fyne.TextAlignCenter
 	c.timerText.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
@@ -47,7 +55,23 @@ func (c *ClockWindow) Init() {
 	c.subjectText.Alignment = fyne.TextAlignCenter
 	c.subjectText.TextStyle = fyne.TextStyle{Monospace: true}
 	
-	content := container.New(layout.NewVBoxLayout(), c.timerText, widget.NewSeparator(), c.subjectText)
+	stealFocusCheck := widget.NewCheck("Steal Focus", func(value bool) {
+			c.stealFocus = value
+		})
+	stealFocusCheck.Checked = c.stealFocus
+
+	// content := container.New(layout.NewHBoxLayout(), container.New(layout.NewVBoxLayout(), c.timerText, widget.NewSeparator(), c.subjectText), 
+	content := container.New(layout.NewVBoxLayout(), c.timerText, widget.NewSeparator(), c.subjectText, widget.NewSeparator(),
+		container.New(layout.NewHBoxLayout(), 
+			stealFocusCheck,
+			widget.NewButton("Show Schedule", func() { 
+				if c.mainWindow != nil {
+					c.mainWindow.UpdateAndShow()	
+				}
+				
+			}),
+		),
+	)
 	c.window.SetContent(content)
 }
 
@@ -63,6 +87,6 @@ func (c *ClockWindow) Update(s *SubjectRunner) {
 	c.subjectText.Text = fmt.Sprintf("Current: %s", s.Subject.Title)
 	c.timerText.Refresh()
 	c.subjectText.Refresh()
-	if (!c.manuallyClosed){
+	if (!c.manuallyClosed && c.stealFocus){
 		c.window.Show()}
 }

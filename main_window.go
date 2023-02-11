@@ -24,6 +24,7 @@ func NewMainWindow(app fyne.App, runner *ScheduleRunner,clockWindow *ClockWindow
 		m.window.Hide()
 	})
 	m.UpdateAndShow()
+	clockWindow.SetMainWindow(m)
 	return m
 }
 
